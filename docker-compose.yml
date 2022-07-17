@@ -2,7 +2,7 @@ version: '3'
 services:
         python3:
                 build: .
-                container_name: 'ds-template'
+                container_name: 'timepred'
                 working_dir: '/app'
                 environment:
                         - DISPLAY=$DISPLAY
