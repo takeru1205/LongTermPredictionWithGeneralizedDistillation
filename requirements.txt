@@ -1,0 +1,23 @@
+jupyterthemes == 0.20.0
+plotly == 5.0.0
+RISE == 5.7.1
+wordcloud == 1.8.1
+openpyxl
+seaborn
+japanize_matplotlib
+lightgbm 
+pyfpgrowth
+networkx
+matplotlib_venn
+pandas-profiling
+dtale
+sweetviz
+transformers[ja]
+matplotlib
+matplotlib_venn
+lightgbm
+xgboost
+catboost
+pandas-profiling
+dtale
+sweetviz
