@@ -35,21 +35,39 @@ class MyDataset(Dataset):
         return out_data, out_label
 
 
-def get_data(timestep=12):
+def get_data(timestep=6):
     train_data, test_data = load_data()
     X_train, y_train, X_test, y_test = [], [], [], []
 
-    for n in range(len(train_data)-12):
+    for n in range(len(train_data)-6-timestep):
         X_train.append(train_data[n:n+timestep])
-        y_train.append(train_data[n+12])
+        y_train.append(train_data[n+timestep+6])
 
-    for n in range(len(test_data)-12):
+    for n in range(len(test_data)-6-timestep):
         X_test.append(test_data[n:n+timestep])
-        y_test.append(test_data[n+12])
+        y_test.append(test_data[n+timestep+6])
 
     trainSet = MyDataset(torch.FloatTensor(np.array(X_train)).cuda(), torch.FloatTensor(np.array(y_train)).cuda())
     testSet = MyDataset(torch.FloatTensor(np.array(X_test)).cuda(), torch.FloatTensor(np.array(y_test)).cuda())
     return trainSet, testSet
+
+
+def generate_privilege_information(timestep=6):
+    train_data, test_data = load_data()
+    X_train, y_train, X_test, y_test = [], [], [], []
+
+    for n in range(len(train_data)-6-timestep):
+        X_train.append(train_data[n:n+timestep+6])
+        y_train.append(train_data[n+timestep+6])
+
+    for n in range(len(test_data)-6-timestep):
+        X_test.append(test_data[n:n+timestep+6])
+        y_test.append(test_data[n+timestep+6])
+
+    trainSet = MyDataset(torch.FloatTensor(np.array(X_train)).cuda(), torch.FloatTensor(np.array(y_train)).cuda())
+    testSet = MyDataset(torch.FloatTensor(np.array(X_test)).cuda(), torch.FloatTensor(np.array(y_test)).cuda())
+    return trainSet, testSet
+
 
 
 if __name__ == '__main__':
@@ -60,5 +78,17 @@ if __name__ == '__main__':
     trainset, testset = get_data()
     print(len(trainset))
     print(len(testset))
+    tmp_data, tmp_label = trainset[0]
+    print(len(tmp_data))
+    print(tmp_label)
+    tmp_data, tmp_label = testset[0]
+    print(len(tmp_data))
+    print(tmp_label)
 
-
+    privilege_trainset, privilege_testset = generate_privilege_information()
+    tmp_data, tmp_label = privilege_trainset[0]
+    print(len(tmp_data))
+    print(tmp_label)
+    tmp_data, tmp_label = privilege_testset[0]
+    print(len(tmp_data))
+    print(tmp_label)
