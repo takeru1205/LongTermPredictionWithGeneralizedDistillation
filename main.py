@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import torch
@@ -7,9 +8,13 @@ from torch.utils.data import Dataset, DataLoader
 from sktime.performance_metrics.forecasting import MeanAbsolutePercentageError  # MAPE
 
 
-from model import model
-from load_data import get_data
+from model import model, teacher_model
+from load_data import get_data, generate_privilege_information
 
+
+seed = 42
+np.random.seed(seed)
+torch.manual_seed(seed)
 
 # Device Check
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -18,15 +23,20 @@ print(f"The device is {device}")
 # Model
 n_input = 1
 n_output = 1
-n_hidden = 64
+n_hidden = 128
 
+# Student Model
 lstm = model(n_input, n_output, n_hidden).to(device)
 print(lstm)
 
-# loss_func = MeanAbsolutePercentageError()
 loss_func = nn.MSELoss()
 optimizer = optim.Adam(lstm.parameters(), lr=0.001)
 loss_history = []
+
+
+# Teacher Model
+teacher = model(n_input, n_output, n_hidden).to(device)
+teacher_loss_func = nn.CrossEntropyLoss()
 
 # Generate Data
 timestep = 12
@@ -36,8 +46,9 @@ trainloader = DataLoader(trainset, batch_size=batch_size)
 testloader = DataLoader(testset, batch_size=batch_size)
 
 
-# Training
-epochs = 100
+# Teacher Training
+epochs = 250
+alpha=0.1
 for i in range(epochs):
     for b, tup in enumerate(trainloader):
         X, y = tup
@@ -46,6 +57,12 @@ for i in range(epochs):
         y_pred = lstm(X.unsqueeze(dim=-1))
 
         single_loss = loss_func(y_pred.squeeze(), y)
+
+        l2 = torch.tensor(0., requires_grad=True)
+        for w in teacher.parameters():
+            l2 = l2 + torch.norm(w)**2
+        loss = loss + alpha*l2
+
         single_loss.backward()
         optimizer.step()
 
@@ -54,11 +71,14 @@ for i in range(epochs):
 # Test
 err = 0
 err_history = []
-for _, data in enumerate(testloader):
-    with torch.no_grad():
-        X, y = data
-        pred = lstm(X.unsqueeze(dim=-1))
-        error = loss_func(pred.squeeze(), y)
-        err += error.item()
-        err_history.append(error.item())
+data = testloader.__iter__().next()
+with torch.no_grad():
+    X, y = data
+    pred = lstm(X.unsqueeze(dim=-1))
+    error = loss_func(pred.squeeze(), y)
+    err += error.item()
+    err_history.append(error.item())
 print(f"mean of test error: {err/len(err_history)}")
+plt.plot(range(len(y)), y.cpu().detach().numpy(), color="red")
+plt.plot(range(len(y)), pred.cpu().squeeze().detach().numpy(), color="green")
+plt.show()
